@@ -11,13 +11,6 @@ use yii\db\ActiveRelationTrait;
 use yii\db\QueryTrait;
 
 /**
- * ActiveQuery represents a query associated with an Active Record class.
- *
- * An ActiveQuery can be a normal query or be used in a relational context.
- *
- * ActiveQuery instances are usually created by [[ActiveRecord::find()]].
- * Relational queries are created by [[ActiveRecord::hasOne()]] and [[ActiveRecord::hasMany()]].
- *
  * Normal Query
  * ------------
  *
@@ -26,45 +19,15 @@ use yii\db\QueryTrait;
  * - [[one()]]: returns a single record populated with the first row of data.
  * - [[all()]]: returns all records based on the query results.
  * - [[count()]]: returns the number of records.
- * - [[sum()]]: returns the sum over the specified column.
- * - [[average()]]: returns the average over the specified column.
- * - [[min()]]: returns the min over the specified column.
- * - [[max()]]: returns the max over the specified column.
- * - [[scalar()]]: returns the value of the first column in the first row of the query result.
- * - [[exists()]]: returns a value indicating whether the query result has data or not.
  *
  * You can use query methods, such as [[where()]], [[limit()]] and [[orderBy()]] to customize the query options.
- *
- * ActiveQuery also provides the following additional query options:
- *
- * - [[with()]]: list of relations that this query should be performed with.
- * - [[indexBy()]]: the name of the column by which the query result should be indexed.
+ * 
  * - [[asArray()]]: whether to return each record as an array.
  *
- * These options can be configured using methods of the same name. For example:
- *
  * ```php
- * $customers = Customer::find()->with('orders')->asArray()->all();
+ * $demos = Demo::find()->asArray()->all();
  * ```
- *
- * Relational query
- * ----------------
- *
- * In relational context ActiveQuery represents a relation between two Active Record classes.
- *
- * Relational ActiveQuery instances are usually created by calling [[ActiveRecord::hasOne()]] and
- * [[ActiveRecord::hasMany()]]. An Active Record class declares a relation by defining
- * a getter method which calls one of the above methods and returns the created ActiveQuery object.
- *
- * A relation is specified by [[link]] which represents the association between columns
- * of different tables; and the multiplicity of the relation is indicated by [[multiple]].
- *
- * If a relation involves a pivot table, it may be specified by [[via()]].
- * This methods may only be called in a relational context. Same is true for [[inverseOf()]], which
- * marks a relation as inverse of another relation.
- *
- * @author Carsten Brandt <mail@cebe.cc>
- * @since 2.0
+ * @author xjflyttp <xjflyttp@gmail.com>
  */
 class ActiveQuery extends Component implements ActiveQueryInterface {
 
@@ -85,11 +48,19 @@ use ActiveQueryTrait;
         'NOT' => 'buildNotCondition',
         'AND' => 'buildAndCondition',
         'OR' => 'buildAndCondition',
-        'IN' => 'buildInCondition',
-        'NOT IN' => 'buildInCondition',
         'WILD' => 'buildWildCondition',
     ];
+    /**
+     * Search Query String Cache
+     * @var string 
+     */
     public $query;
+    /**
+     * enable fuzzy query
+     * @var bool 
+     * @see http://www.xunsearch.com/doc/php/api/XSSearch
+     */
+    public $fuzzy = false;
 
     /**
      * Constructor.
@@ -114,10 +85,15 @@ use ActiveQueryTrait;
 
     private function setCondition(XSSearch $search) {
         $params = [];
-        $search->setLimit($this->limit, $this->offset);
+//        $search->setLimit($this->limit, $this->offset);
+        $this->buildLimit($this->limit, $this->offset);
         $this->buildOrderBy($this->orderBy);
         $this->query = $query = $this->buildWhere($this->where, $params);
         $search->setQuery($query);
+        //fuzzy query
+        if ($this->fuzzy) {
+            $search->setFuzzy();
+        }
     }
 
     /**
@@ -158,8 +134,10 @@ use ActiveQueryTrait;
         $parts = [];
         foreach ($condition as $column => $value) {
             if (is_array($value)) {
-                // IN condition
-                $parts[] = $this->buildInCondition('IN', [$column, $value], $params);
+                foreach ($value as $v) {
+                    $parts[] = "$column:$v";
+                }
+                return count($parts) === 1 ? $parts[0] : '(' . implode(') OR (', $parts) . ')';
             } else {
                 if ($value !== null) {
                     $parts[] = "$column:$value";

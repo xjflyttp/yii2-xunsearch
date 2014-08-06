@@ -10,19 +10,8 @@ use yii\helpers\Inflector;
 use yii\db\Exception;
 
 /**
-
-'xunsearch' => [
-    'class' => 'xj\\xunsearch\\Connection',
-    'configDirectory' => '@common/config/xunsearch',
-],
- *
- *
- * @property string $driverName Name of the DB driver. This property is read-only.
- * @property boolean $isActive Whether the DB connection is established. This property is read-only.
- * @property LuaScriptBuilder $luaScriptBuilder This property is read-only.
- *
- * @author Carsten Brandt <mail@cebe.cc>
- * @since 2.0
+ * Xunsearch Connection
+ * @author xjflyttp <xjflyttp@gmail.com>
  */
 class Connection extends Component {
 

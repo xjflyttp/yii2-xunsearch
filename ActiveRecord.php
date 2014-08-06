@@ -10,27 +10,8 @@ use yii\helpers\Inflector;
 use yii\helpers\StringHelper;
 
 /**
- * ActiveRecord is the base class for classes representing relational data in terms of objects.
- *
- * This class implements the ActiveRecord pattern for the [redis](http://redis.io/) key-value store.
- *
- * For defining a record a subclass should at least implement the [[attributes()]] method to define
- * attributes. A primary key can be defined via [[primaryKey()]] which defaults to `id` if not specified.
- *
- * The following is an example model called `Customer`:
- *
- * ```php
- * class Customer extends \yii\redis\ActiveRecord
- * {
- *     public function attributes()
- *     {
- *         return ['id', 'name', 'address', 'registration_date'];
- *     }
- * }
- * ```
- *
- * @author Carsten Brandt <mail@cebe.cc>
- * @since 2.0
+ * Xunsearch AR
+ * @author xjflyttp <xjflyttp@gmail.com>
  */
 class ActiveRecord extends BaseActiveRecord {
 
@@ -55,6 +36,18 @@ class ActiveRecord extends BaseActiveRecord {
      */
     public static function find() {
         return Yii::createObject(ActiveQuery::className(), [get_called_class()]);
+    }
+    
+    /**
+     * Find Model By PK
+     * @param int|string $id
+     * @return Database
+     */
+    public static function findByPk($id) {
+        $find = static::find();
+        $pk = static::primaryKey();
+        $pk = $pk[0];
+        return $find->where([$pk => $id])->one();
     }
 
     /**
